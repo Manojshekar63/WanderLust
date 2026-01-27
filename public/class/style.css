@@ -1,0 +1,28 @@
+.navbar{
+    height:5m;
+}
+.nav-box {
+    height: 5.5rem;
+}
+
+#nav-main {
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    align-items: center;
+    height: 5.5rem;
+    width: 100vw;
+    background-color: white;
+    border-bottom: .5px solid rgba(128, 128, 128, 0.503);
+    position: fixed;
+    top: 0px;
+    z-index: 120;
+}
+
+#nav-main-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 5.5rem;
+    width: 100vw;
+}

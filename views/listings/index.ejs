@@ -1,0 +1,21 @@
+<% layout('layouts/boilerplate') %>
+<body>
+<h1>All listings</h1>
+<p><a href="/listings/new">Create new listing</a></p>
+<ul>
+  <% if (!listings || listings.length === 0) { %>
+    <li>No listings yet.</li>
+  <% } else { %>
+    <% listings.forEach(function(listing) { %>
+      <li>
+        <h2><a href="/listings/<%= listing._id %>"><%= listing.title %></a></h2>
+        <p><%= listing.description || '' %></p>
+        <% if (listing.image && listing.image.url) { %>
+          <img src="<%= listing.image.url %>" alt="<%= listing.title %>" style="max-width:240px;display:block;margin-top:6px;" />
+        <% } %>
+        <p>Price: $<%= listing.price %> — <%= listing.location %>, <%= listing.country %></p>
+      </li>
+    <% }); %>
+  <% } %>
+</ul>
+</body>
