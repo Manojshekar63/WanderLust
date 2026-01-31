@@ -4,10 +4,17 @@ const mongoose = require("mongoose");
 const Listing = require("./models/listing.js");
 const path = require("path");
 const methodOverride = require("method-override");
-const wrapAsync = require("./utils/wrapsync.js");
 const ExpressError = require("./utils/expreererror.js");
-const { listingSchema } = require("./schema.js");
 const MONGO_URL = "mongodb://127.0.0.1:27017/wanderlust";
+const Review = require("./models/review.js");
+const session = require("express-session");
+const flash = require("connect-flash");
+const passport = require("passport");
+const localStrategy = require("passport-local");
+const user = require("./models/user.js");
+const listingrouter = require("./routes/listing.js");
+const reviewrouter = require("./routes/review.js");
+const userrouter = require("./routes/user.js");
 
 main()
   .then(() => {
@@ -30,70 +37,51 @@ app.use(methodOverride("_method"));
 app.use(express.static(path.join(__dirname, "public")));
 
 //added
+ const sessionoptions = {
+   secret: "mysecretcode",
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+      httpOnly: true,
+      expires: Date.now() + 1000 * 60 * 60 * 24 * 7,
+      maxAge: 1000 * 60 * 60 * 24 * 7,
+    },
+ };
+ app.use(session(sessionoptions));
 
+app.use(flash());
+app.use(passport.initialize());
+app.use(passport.session());
+passport.use(new localStrategy(user.authenticate()));
 
+passport.serializeUser(user.serializeUser());
+passport.deserializeUser(user.deserializeUser());
+
+app.use((req, res, next) => {
+  res.locals.success = req.flash("success");
+  res.locals.error = req.flash("error");
+
+  next();
+}
+);
 
 app.get("/", (req, res) => {
   res.send("Hi, I am root");
 });
-const validateListing = (req, res, next) => {
-  const { error } = listingSchema.validate(req.body);
-  if (error) {
-    throw new ExpressError(error.message, 400);
-  }
-  next();
-};
 
-//Index Route
-app.get("/listings", wrapAsync(async (req, res) => {
-  const allListings = await Listing.find({});
-  res.render("listings/index.ejs", { allListings });
-}));
-
-//New Route
-app.get("/listings/new", (req, res) => {
-  res.render("listings/new.ejs");
-});
-
-//Show Route
-app.get("/listings/:id", wrapAsync(async (req, res) => {
-  let { id } = req.params;
-  const listing = await Listing.findById(id);
-  res.render("listings/show.ejs", { listing });
-}));
-//Create Route
-app.post("/listings", validateListing, wrapAsync(async (req, res, next) => {
-  const newListing = new Listing(req.body.listing);
-  await newListing.save();
-  res.redirect("/listings");
-}));
-
-//Edit Route
-app.get("/listings/:id/edit", async (req, res) => {
-  let { id } = req.params;
-  const listing = await Listing.findById(id);
-  res.render("listings/edit.ejs", { listing });
-});
-
-//Update Route
-app.put("/listings/:id", validateListing, wrapAsync(async (req, res) => {
-  let { id } = req.params;
-  await Listing.findByIdAndUpdate(id, { ...req.body.listing });
-  res.redirect(`/listings/${id}`);
-}));
-
-//Delete Route
-app.delete("/listings/:id", wrapAsync(   async (req, res) => {
-  let { id } = req.params;
-  let deletedListing = await Listing.findByIdAndDelete(id);
-  console.log(deletedListing);
-  res.redirect("/listings");
-}));
-
-// app.all("*", (req, res, next) => {
-//   next(new ExpressError("Page Not Found", 404));
+// app.get("/demouser" ,async (req,res)=>{
+//   let fakeuser =new user({email:"delta" ,username:"johnDoe",});
+//   let newuser= await user.register(fakeuser ,"chicken");
+//   res.send(newuser);
 // }
 // );
+    
+
+
+app.use("/listings", listingrouter);
+app.use("/listings/:id/reviews", reviewrouter);
+app.use("/", userrouter);
+
 app.use( (req, res, next) => {
   next ( new ExpressError("Page Not Found" , 404));
 });
@@ -102,19 +90,6 @@ app.use((err, req, res, next) => {
   const message = err.message || "Something went wrong";
   res.status(statusCode).render("error.ejs", { err: { status: statusCode, message } });
 });
-// app.get("/testListing", async (req, res) => {
-//   let sampleListing = new Listing({
-//     title: "My New Villa",
-//     description: "By the beach",
-//     price: 1200,
-//     location: "Calangute, Goa",
-//     country: "India",
-//   });
-
-//   await sampleListing.save();
-//   console.log("sample was saved");
-//   res.send("successful testing");
-// });
 
 
 app.listen(8080, () => {
