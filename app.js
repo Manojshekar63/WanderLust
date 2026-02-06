@@ -3,7 +3,7 @@ if(process.env.NODE_ENV!=="production"){
 } 
 
 
-console.log(process.env.secret);
+console.log(process.env.SECRET_KEY);
 
 const express = require("express");
 const app = express();
@@ -12,7 +12,7 @@ const Listing = require("./models/listing.js");
 const path = require("path");
 const methodOverride = require("method-override");
 const ExpressError = require("./utils/expreererror.js");
-const MONGO_URL = "mongodb://127.0.0.1:27017/wanderlust";
+const MongoStore = require('connect-mongo');
 const Review = require("./models/review.js");
 const session = require("express-session");
 const flash = require("connect-flash");
@@ -23,6 +23,9 @@ const listingrouter = require("./routes/listing.js");
 const reviewrouter = require("./routes/review.js");
 const userrouter = require("./routes/user.js");
 
+
+// const MONGO_URL = "mongodb://127.0.0.1:27017/wanderlust";
+const MONGO_URL= process.env.ATLASDB_URL;
 main()
   .then(() => {
     console.log("connected to DB");
@@ -43,18 +46,22 @@ app.use(express.json());
 app.use(methodOverride("_method"));
 app.use(express.static(path.join(__dirname, "public")));
 
-//added
- const sessionoptions = {
-   secret: "mysecretcode",
-    resave: false,
-    saveUninitialized: true,
-    cookie: {
-      httpOnly: true,
-      expires: Date.now() + 1000 * 60 * 60 * 24 * 7,
-      maxAge: 1000 * 60 * 60 * 24 * 7,
-    },
- };
- app.use(session(sessionoptions));
+const store = MongoStore.create({
+  mongoUrl: process.env.ATLASDB_URL,
+  touchAfter: 24 * 3600
+});
+
+app.use(session({
+  store: store,
+  secret: process.env.SECRET_KEY,
+  resave: false,
+  saveUninitialized: true,
+  cookie: {
+    expires: Date.now() + 7 * 24 * 60 * 60 * 1000,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    httpOnly: true
+  }
+}));
 
 app.use(flash());
 app.use(passport.initialize());
@@ -72,9 +79,9 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get("/", (req, res) => {
-  res.send("Hi, I am root");
-});
+// app.get("/", (req, res) => {
+//   res.send("Hi, I am root");
+// });
 
 
     
