@@ -2,6 +2,9 @@
 
 A full-stack web application that replicates the core functionality of Airbnb, allowing users to browse, create, and review property listings. Built with Node.js, Express, MongoDB, and integrated with Cloudinary for image storage and Mapbox for interactive maps.
 
+![Visitor Count](https://profile-counter.glitch.me/Manojshekar63-WanderLust/count.svg)
+
+
 ## 🌐 Live Demo
 
 **[View Live Application](https://wanderlust-5l9g.onrender.com/listings)**
